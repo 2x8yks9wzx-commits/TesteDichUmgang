@@ -1,0 +1,373 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-sans)}
+.quiz-wrap{padding:1.5rem 0;max-width:680px}
+.progress-bar{height:4px;background:var(--color-border-tertiary);border-radius:2px;margin-bottom:1.5rem}
+.progress-fill{height:100%;background:#1D9E75;border-radius:2px;transition:width 0.4s ease}
+.score-badge{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--color-text-secondary);margin-bottom:1rem}
+.score-num{font-size:13px;font-weight:500;color:var(--color-text-primary)}
+.q-block{display:none}
+.q-block.active{display:block}
+.q-type{font-size:11px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--color-text-tertiary);margin-bottom:.4rem}
+.q-text{font-size:16px;font-weight:500;color:var(--color-text-primary);line-height:1.5;margin-bottom:1.25rem}
+.q-hint{font-size:13px;color:var(--color-text-secondary);margin-bottom:1rem;font-style:italic}
+.options{display:flex;flex-direction:column;gap:8px;margin-bottom:1.25rem}
+.opt{display:flex;align-items:flex-start;gap:10px;padding:.75rem 1rem;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);cursor:pointer;transition:background .15s,border-color .15s;font-size:14px;color:var(--color-text-primary);background:var(--color-background-primary);user-select:none}
+.opt:hover:not(.locked){background:var(--color-background-secondary);border-color:var(--color-border-primary)}
+.opt.selected{border-color:#1D9E75;background:#E1F5EE}
+.opt.selected .opt-marker{background:#1D9E75;border-color:#1D9E75;color:#fff}
+.opt.correct{border-color:#3B6D11;background:#EAF3DE}
+.opt.correct .opt-marker{background:#3B6D11;border-color:#3B6D11;color:#fff}
+.opt.wrong{border-color:#A32D2D;background:#FCEBEB}
+.opt.wrong .opt-marker{background:#A32D2D;border-color:#A32D2D;color:#fff}
+.opt-marker{flex-shrink:0;width:20px;height:20px;border-radius:50%;border:0.5px solid var(--color-border-secondary);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:var(--color-text-tertiary);background:var(--color-background-secondary);margin-top:1px}
+.opt-text{flex:1;line-height:1.4}
+.open-field{width:100%;min-height:100px;padding:.75rem 1rem;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);font-size:14px;font-family:var(--font-sans);color:var(--color-text-primary);background:var(--color-background-primary);resize:vertical;margin-bottom:1rem}
+.open-field:focus{outline:none;border-color:#1D9E75}
+.anw-field{width:100%;padding:.75rem 1rem;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);font-size:14px;font-family:var(--font-sans);color:var(--color-text-primary);background:var(--color-background-primary);margin-bottom:.5rem}
+.anw-field:focus{outline:none;border-color:#1D9E75}
+.feedback-box{padding:.75rem 1rem;border-radius:var(--border-radius-md);font-size:13px;line-height:1.5;margin-bottom:1.25rem;display:none}
+.feedback-box.show{display:block}
+.fb-correct{background:#EAF3DE;border:0.5px solid #3B6D11;color:#27500A}
+.fb-wrong{background:#FCEBEB;border:0.5px solid #A32D2D;color:#791F1F}
+.fb-info{background:#E6F1FB;border:0.5px solid #185FA5;color:#0C447C}
+.btn-row{display:flex;gap:10px;align-items:center}
+.btn{padding:.6rem 1.25rem;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);font-size:14px;font-weight:500;cursor:pointer;background:var(--color-background-primary);color:var(--color-text-primary);transition:background .15s,transform .1s}
+.btn:hover{background:var(--color-background-secondary)}
+.btn:active{transform:scale(.98)}
+.btn-primary{background:#1D9E75;border-color:#0F6E56;color:#fff}
+.btn-primary:hover{background:#0F6E56}
+.btn-skip{font-size:13px;color:var(--color-text-secondary);background:none;border:none;cursor:pointer;padding:.4rem}
+.nav-dots{display:flex;gap:6px;margin-left:auto}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--color-border-secondary)}
+.dot.done{background:#1D9E75}
+.dot.active{background:#1D9E75;ring:2px solid #9FE1CB}
+.result-wrap{text-align:center;padding:2rem 1rem}
+.result-emoji{font-size:48px;margin-bottom:1rem}
+.result-title{font-size:20px;font-weight:500;color:var(--color-text-primary);margin-bottom:.5rem}
+.result-sub{font-size:14px;color:var(--color-text-secondary);margin-bottom:1.5rem}
+.score-ring{display:inline-flex;align-items:center;justify-content:center;width:100px;height:100px;border-radius:50%;border:4px solid #1D9E75;font-size:28px;font-weight:500;color:var(--color-text-primary);margin-bottom:1.5rem}
+.summary{text-align:left;margin-bottom:1.5rem}
+.sum-item{display:flex;align-items:center;gap:8px;padding:.6rem 0;border-bottom:0.5px solid var(--color-border-tertiary);font-size:13px;color:var(--color-text-secondary)}
+.sum-item:last-child{border-bottom:none}
+.sum-check{width:18px;height:18px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff}
+.sum-ok{background:#3B6D11}
+.sum-no{background:#A32D2D}
+.sum-skip{background:#888780}
+.multi-hint{font-size:12px;color:var(--color-text-secondary);margin-bottom:.75rem;font-style:italic}
+</style>
+
+<h2 class="sr-only">Teste dich – Mit Geld umgehen: interaktives Quiz</h2>
+
+<div class="quiz-wrap" id="qw">
+<div class="progress-bar"><div class="progress-fill" id="pf" style="width:0%"></div></div>
+<div class="score-badge">
+  <span>Frage <span id="qn">1</span> von <span id="qt">10</span></span>
+  <span style="margin-left:auto">Punkte: <span class="score-num" id="sc">0</span></span>
+</div>
+
+<div id="q0" class="q-block active">
+  <div class="q-type">Single Choice</div>
+  <div class="q-text">Wozu braucht man ein Girokonto?</div>
+  <div class="options">
+    <div class="opt" data-q="0" data-v="0"><span class="opt-marker">A</span><span class="opt-text">Um Bargeld zu horten, ohne zur Bank zu gehen</span></div>
+    <div class="opt" data-q="0" data-v="1"><span class="opt-marker">B</span><span class="opt-text">Um Lohn zu empfangen und Rechnungen zu bezahlen</span></div>
+    <div class="opt" data-q="0" data-v="2"><span class="opt-marker">C</span><span class="opt-text">Um Zinsen auf Ersparnisse zu erhalten</span></div>
+    <div class="opt" data-q="0" data-v="3"><span class="opt-marker">D</span><span class="opt-text">Um einen Ratenkredit aufzunehmen</span></div>
+  </div>
+  <div class="feedback-box" id="fb0"></div>
+  <div class="btn-row"><button class="btn btn-primary" id="chk0" onclick="check(0)">Prüfen</button><button class="btn-skip" onclick="skip(0)">Überspringen</button><div class="nav-dots" id="nd0"></div></div>
+</div>
+
+<div id="q1" class="q-block">
+  <div class="q-type">Multiple Choice</div>
+  <div class="q-text">Was kannst du mit deiner Girokarte alles tun?</div>
+  <div class="multi-hint">Mehrere Antworten möglich.</div>
+  <div class="options">
+    <div class="opt" data-q="1" data-v="0"><span class="opt-marker">A</span><span class="opt-text">Geld am Geldautomaten abheben</span></div>
+    <div class="opt" data-q="1" data-v="1"><span class="opt-marker">B</span><span class="opt-text">An der Kasse im Geschäft bezahlen</span></div>
+    <div class="opt" data-q="1" data-v="2"><span class="opt-marker">C</span><span class="opt-text">Zinsen auf dem Konto anlegen</span></div>
+    <div class="opt" data-q="1" data-v="3"><span class="opt-marker">D</span><span class="opt-text">Kontoauszüge ausdrucken</span></div>
+  </div>
+  <div class="feedback-box" id="fb1"></div>
+  <div class="btn-row"><button class="btn btn-primary" id="chk1" onclick="check(1)">Prüfen</button><button class="btn-skip" onclick="skip(1)">Überspringen</button><div class="nav-dots" id="nd1"></div></div>
+</div>
+
+<div id="q2" class="q-block">
+  <div class="q-type">Single Choice</div>
+  <div class="q-text">Was ist der Unterschied zwischen einem Dauerauftrag und einer Lastschrift?</div>
+  <div class="options">
+    <div class="opt" data-q="2" data-v="0"><span class="opt-marker">A</span><span class="opt-text">Beim Dauerauftrag hebt du selbst Geld ab; bei der Lastschrift nicht.</span></div>
+    <div class="opt" data-q="2" data-v="1"><span class="opt-marker">B</span><span class="opt-text">Beim Dauerauftrag überweist du selbst regelmäßig; bei der Lastschrift erlaubst du einer Firma, Geld abzubuchen.</span></div>
+    <div class="opt" data-q="2" data-v="2"><span class="opt-marker">C</span><span class="opt-text">Beide Verfahren sind identisch – nur die Namen unterscheiden sich.</span></div>
+    <div class="opt" data-q="2" data-v="3"><span class="opt-marker">D</span><span class="opt-text">Lastschrift ist nur für Onlinekäufe möglich; Dauerauftrag nur im Geschäft.</span></div>
+  </div>
+  <div class="feedback-box" id="fb2"></div>
+  <div class="btn-row"><button class="btn btn-primary" id="chk2" onclick="check(2)">Prüfen</button><button class="btn-skip" onclick="skip(2)">Überspringen</button><div class="nav-dots" id="nd2"></div></div>
+</div>
+
+<div id="q3" class="q-block">
+  <div class="q-type">Offene Aufgabe</div>
+  <div class="q-text">Erkläre in eigenen Worten, was ein Dispositionskredit ist und warum er gefährlich werden kann.</div>
+  <div class="q-hint">Mindestens 2 Sätze. Nenne auch einen konkreten Nachteil.</div>
+  <textarea class="open-field" id="open3" placeholder="Schreibe hier deine Antwort..."></textarea>
+  <div class="feedback-box fb-info show" id="fb3">📋 Musterlösung: Ein Dispositionskredit entsteht, wenn du mehr Geld ausgibst, als auf deinem Konto ist – du überziehst dein Konto. Die Bank leiht dir das Geld, verlangt aber hohe Zinsen (z. B. 12 % im Jahr). Wer die Situation nicht im Blick hat, kann schnell tief in Schulden geraten.</div>
+  <div class="btn-row"><button class="btn btn-primary" onclick="nextQ(3)">Weiter</button><div class="nav-dots" id="nd3"></div></div>
+</div>
+
+<div id="q4" class="q-block">
+  <div class="q-type">Multiple Choice</div>
+  <div class="q-text">Welche der folgenden Zahlungsarten sind bargeldlose Zahlungen?</div>
+  <div class="multi-hint">Mehrere Antworten möglich.</div>
+  <div class="options">
+    <div class="opt" data-q="4" data-v="0"><span class="opt-marker">A</span><span class="opt-text">Überweisung</span></div>
+    <div class="opt" data-q="4" data-v="1"><span class="opt-marker">B</span><span class="opt-text">Zahlung mit einem 50-€-Schein</span></div>
+    <div class="opt" data-q="4" data-v="2"><span class="opt-marker">C</span><span class="opt-text">Lastschriftverfahren</span></div>
+    <div class="opt" data-q="4" data-v="3"><span class="opt-marker">D</span><span class="opt-text">Zahlung per Girokarte an der Kasse</span></div>
+  </div>
+  <div class="feedback-box" id="fb4"></div>
+  <div class="btn-row"><button class="btn btn-primary" id="chk4" onclick="check(4)">Prüfen</button><button class="btn-skip" onclick="skip(4)">Überspringen</button><div class="nav-dots" id="nd4"></div></div>
+</div>
+
+<div id="q5" class="q-block">
+  <div class="q-type">Single Choice</div>
+  <div class="q-text">Was bedeutet TAN beim Online-Banking?</div>
+  <div class="options">
+    <div class="opt" data-q="5" data-v="0"><span class="opt-marker">A</span><span class="opt-text">Technische Anmeldenummer</span></div>
+    <div class="opt" data-q="5" data-v="1"><span class="opt-marker">B</span><span class="opt-text">Transaktionsnummer</span></div>
+    <div class="opt" data-q="5" data-v="2"><span class="opt-marker">C</span><span class="opt-text">Telefonische Auftragsnummer</span></div>
+    <div class="opt" data-q="5" data-v="3"><span class="opt-marker">D</span><span class="opt-text">Terminale Auszahlungsnummer</span></div>
+  </div>
+  <div class="feedback-box" id="fb5"></div>
+  <div class="btn-row"><button class="btn btn-primary" id="chk5" onclick="check(5)">Prüfen</button><button class="btn-skip" onclick="skip(5)">Überspringen</button><div class="nav-dots" id="nd5"></div></div>
+</div>
+
+<div id="q6" class="q-block">
+  <div class="q-type">Anwendungsaufgabe</div>
+  <div class="q-text">Esma hat 325 € auf dem Konto. Sie will in den Urlaub fahren, der 635 € kostet. Sie überzieht ihr Konto. Wie viel Euro überziehungsbetrag entsteht?</div>
+  <input class="anw-field" type="number" id="anw6" placeholder="Betrag in Euro eingeben...">
+  <div class="feedback-box" id="fb6"></div>
+  <div class="btn-row"><button class="btn btn-primary" id="chk6" onclick="checkNum(6, 310)">Prüfen</button><button class="btn-skip" onclick="skip(6)">Überspringen</button><div class="nav-dots" id="nd6"></div></div>
+</div>
+
+<div id="q7" class="q-block">
+  <div class="q-type">Multiple Choice</div>
+  <div class="q-text">Welche Fehler werden in den Kurzgeschichten „Hier stimmt etwas nicht!" gemacht?</div>
+  <div class="multi-hint">Mehrere Antworten möglich.</div>
+  <div class="options">
+    <div class="opt" data-q="7" data-v="0"><span class="opt-marker">A</span><span class="opt-text">Ömer gibt einem Freund seine Girokarte und PIN weiter.</span></div>
+    <div class="opt" data-q="7" data-v="1"><span class="opt-marker">B</span><span class="opt-text">Herr Kacan schreibt sich seine PIN auf und legt den Zettel in den Geldbeutel.</span></div>
+    <div class="opt" data-q="7" data-v="2"><span class="opt-marker">C</span><span class="opt-text">Marcel hebt zu viel Geld auf einmal ab.</span></div>
+    <div class="opt" data-q="7" data-v="3"><span class="opt-marker">D</span><span class="opt-text">Berat gibt seine PIN ein, obwohl jemand zuschaut.</span></div>
+  </div>
+  <div class="feedback-box" id="fb7"></div>
+  <div class="btn-row"><button class="btn btn-primary" id="chk7" onclick="check(7)">Prüfen</button><button class="btn-skip" onclick="skip(7)">Überspringen</button><div class="nav-dots" id="nd7"></div></div>
+</div>
+
+<div id="q8" class="q-block">
+  <div class="q-type">Single Choice</div>
+  <div class="q-text">Was zeigt der „Saldo neu" auf einem Kontoauszug an?</div>
+  <div class="options">
+    <div class="opt" data-q="8" data-v="0"><span class="opt-marker">A</span><span class="opt-text">Den Namen der Bank</span></div>
+    <div class="opt" data-q="8" data-v="1"><span class="opt-marker">B</span><span class="opt-text">Den Zinssatz für Überziehung</span></div>
+    <div class="opt" data-q="8" data-v="2"><span class="opt-marker">C</span><span class="opt-text">Wie viel Geld nach allen Ein- und Auszahlungen noch auf dem Konto ist</span></div>
+    <div class="opt" data-q="8" data-v="3"><span class="opt-marker">D</span><span class="opt-text">Das Datum des letzten Auszugs</span></div>
+  </div>
+  <div class="feedback-box" id="fb8"></div>
+  <div class="btn-row"><button class="btn btn-primary" id="chk8" onclick="check(8)">Prüfen</button><button class="btn-skip" onclick="skip(8)">Überspringen</button><div class="nav-dots" id="nd8"></div></div>
+</div>
+
+<div id="q9" class="q-block">
+  <div class="q-type">Offene Aufgabe</div>
+  <div class="q-text">Nenne zwei Vorteile und zwei Nachteile einer Lastschrift (Einzugsermächtigung).</div>
+  <div class="q-hint">Schreibe vollständige Sätze.</div>
+  <textarea class="open-field" id="open9" placeholder="Schreibe hier deine Antwort..."></textarea>
+  <div class="feedback-box fb-info show" id="fb9">📋 Musterlösung – Vorteile: Bequem, da keine manuelle Überweisung nötig ist. Zahlungen werden nie vergessen. | Nachteile: Man kann die Kontrolle über Abbuchungen verlieren. Es besteht ein Risiko, Betrügern Zugang zum Konto zu geben, wenn man Bankdaten leichtfertig weitergibt.</div>
+  <div class="btn-row"><button class="btn btn-primary" onclick="nextQ(9)">Ergebnis anzeigen</button><div class="nav-dots" id="nd9"></div></div>
+</div>
+
+<div id="result" style="display:none">
+  <div class="result-wrap">
+    <div class="score-ring" id="rring">–</div>
+    <div class="result-title" id="rtitle"></div>
+    <div class="result-sub" id="rsub"></div>
+    <div class="summary" id="rsum"></div>
+    <button class="btn btn-primary" onclick="restart()">Nochmal versuchen</button>
+  </div>
+</div>
+
+</div>
+
+<script>
+const TOTAL = 10;
+const correct = {0:1, 1:[0,1,3], 2:1, 4:[0,2,3], 5:1, 7:[0,1,3], 8:2};
+const feedback = {
+  0:{ok:"Richtig! Das Girokonto dient dazu, Lohn zu empfangen und Rechnungen (Miete, Strom usw.) zu bezahlen.",bad:"Nicht ganz. Das Girokonto ist vor allem zum Empfang von Lohn und zur Bezahlung von Rechnungen da – nicht zum Sparen oder für Kredite."},
+  1:{ok:"Super! Mit der Girokarte kannst du am Automaten Geld abheben, im Geschäft bezahlen und Kontoauszüge ausdrucken. Zinsen anlegen geht damit nicht.",bad:"Überprüf nochmal: Zinsen anlegen geht mit der Girokarte nicht – das sind A, B und D."},
+  2:{ok:"Genau! Beim Dauerauftrag erteilst du deiner Bank den Auftrag, regelmäßig zu überweisen. Bei der Lastschrift erlaubst du einer Firma, selbst Geld abzubuchen.",bad:"Nicht richtig. Der entscheidende Unterschied: Beim Dauerauftrag überweist du aktiv, bei der Lastschrift darf eine Firma passiv abbuchen."},
+  4:{ok:"Richtig! Überweisung, Lastschrift und Girokartenzahlung sind bargeldlos. Nur der 50-€-Schein ist Barzahlung.",bad:"Nicht ganz. Bargeldlos bedeutet: kein echtes Bargeld wechselt die Hand. Das gilt für A, C und D – nicht für B (Geldschein)."},
+  5:{ok:"Korrekt! TAN = Transaktionsnummer. Sie ersetzt beim Online-Banking deine Unterschrift.",bad:"Nicht richtig. TAN steht für Transaktionsnummer – eine Zahlenfolge, die du für jeden Bankauftrag online brauchst."},
+  7:{ok:"Richtig! Ömer gibt Karte + PIN weiter (gefährlich!), Herr Kacan schreibt die PIN auf (nie tun!), und Berat gibt die PIN ein, obwohl jemand zuschaut. Marcel hat kein echtes Problem in der Geschichte.",bad:"Überprüf nochmal: Marcel tippt einfach mehrfach falsch – das ist kein Sicherheitsfehler. Die Fehler sind A, B und D."},
+  8:{ok:"Richtig! Der Saldo neu zeigt den aktuellen Kontostand nach allen Buchungen.",bad:"Nicht ganz. Saldo neu = aktueller Kontostand nach allen Ein- und Auszahlungen – also wie viel Geld noch da ist."}
+};
+
+let cur = 0;
+let score = 0;
+let results = Array(TOTAL).fill(null);
+let locked = Array(TOTAL).fill(false);
+let selected = {};
+
+function initDots(){
+  for(let q=0;q<TOTAL;q++){
+    let nd = document.getElementById('nd'+q);
+    if(!nd)continue;
+    nd.innerHTML='';
+    for(let i=0;i<TOTAL;i++){
+      let d=document.createElement('div');
+      d.className='dot'+(i===q?' active':results[i]===true?' done':'');
+      nd.appendChild(d);
+    }
+  }
+}
+
+document.querySelectorAll('.opt').forEach(o=>{
+  o.addEventListener('click',function(){
+    let q=parseInt(this.dataset.q);
+    if(locked[q])return;
+    let v=parseInt(this.dataset.v);
+    let isMulti=Array.isArray(correct[q]);
+    if(!isMulti){
+      document.querySelectorAll('[data-q="'+q+'"]').forEach(x=>x.classList.remove('selected'));
+      selected[q]=[v];
+    }else{
+      if(!selected[q])selected[q]=[];
+      let idx=selected[q].indexOf(v);
+      if(idx>-1){selected[q].splice(idx,1);this.classList.remove('selected');}
+      else{selected[q].push(v);this.classList.add('selected');}
+      return;
+    }
+    this.classList.add('selected');
+  });
+});
+
+function check(q){
+  if(locked[q])return;
+  let fb=document.getElementById('fb'+q);
+  let sel=selected[q]||[];
+  let ans=correct[q];
+  let ok=false;
+  if(Array.isArray(ans)){
+    let sorted=s=>[...s].sort((a,b)=>a-b).join(',');
+    ok=sorted(sel)===sorted(ans);
+  }else{ok=sel.length===1&&sel[0]===ans;}
+  locked[q]=true;
+  document.querySelectorAll('[data-q="'+q+'"]').forEach(o=>{
+    o.classList.add('locked');
+    let v=parseInt(o.dataset.v);
+    let isAns=Array.isArray(ans)?ans.includes(v):ans===v;
+    let isSel=sel.includes(v);
+    if(isAns)o.classList.add('correct');
+    else if(isSel&&!isAns)o.classList.add('wrong');
+  });
+  fb.className='feedback-box show '+(ok?'fb-correct':'fb-wrong');
+  fb.textContent=(ok?'✓ '+feedback[q].ok:'✗ '+feedback[q].bad);
+  if(ok)score++;
+  results[q]=ok;
+  document.getElementById('sc').textContent=score;
+  document.getElementById('chk'+q).textContent='Weiter';
+  document.getElementById('chk'+q).onclick=function(){nextQ(q)};
+  updateProgress();
+}
+
+function checkNum(q, expected){
+  if(locked[q])return;
+  let val=parseInt(document.getElementById('anw'+q).value);
+  let fb=document.getElementById('fb'+q);
+  locked[q]=true;
+  let ok=val===expected;
+  fb.className='feedback-box show '+(ok?'fb-correct':'fb-wrong');
+  if(ok){fb.textContent='✓ Richtig! 635 € – 325 € = 310 € Überziehungsbetrag.';score++;results[q]=true;}
+  else{fb.textContent='✗ Nicht ganz. 635 € (Reise) – 325 € (Kontostand) = 310 € Überziehung. Bei 12 % Zinsen im Jahr wären das etwa 37,20 € Zusatzkosten.';}
+  document.getElementById('sc').textContent=score;
+  document.getElementById('chk'+q).textContent='Weiter';
+  document.getElementById('chk'+q).onclick=function(){nextQ(q)};
+  updateProgress();
+}
+
+function skip(q){
+  results[q]=false;
+  locked[q]=true;
+  let fb=document.getElementById('fb'+q);
+  if(fb){fb.className='feedback-box show fb-info';fb.textContent='⏭ Übersprungen.';}
+  nextQ(q);
+}
+
+function nextQ(q){
+  let next=q+1;
+  if(next>=TOTAL){showResult();return;}
+  document.getElementById('q'+q).classList.remove('active');
+  document.getElementById('q'+next).classList.add('active');
+  cur=next;
+  document.getElementById('qn').textContent=next+1;
+  updateProgress();
+  initDots();
+}
+
+function updateProgress(){
+  let done=results.filter(r=>r!==null).length;
+  document.getElementById('pf').style.width=Math.round(done/TOTAL*100)+'%';
+}
+
+function showResult(){
+  document.getElementById('qw').style.display='none';
+  let rd=document.getElementById('result');
+  rd.style.display='block';
+  let pct=Math.round(score/TOTAL*100);
+  document.getElementById('rring').textContent=score+'/'+TOTAL;
+  let title='',sub='';
+  if(pct>=80){title='Ausgezeichnet!';sub='Du kennst dich richtig gut mit Geld aus. Weiter so!';}
+  else if(pct>=60){title='Gut gemacht!';sub='Du hast die wichtigsten Inhalte verstanden. Schau dir die Fehler nochmal an.';}
+  else if(pct>=40){title='Auf dem richtigen Weg!';sub='Einiges sitzt schon – lies die Texte nochmal durch und probiere es erneut.';}
+  else{title='Weiter üben!';sub='Kein Problem – geh die Materialien nochmal durch und versuch es dann nochmal.';}
+  document.getElementById('rtitle').textContent=title;
+  document.getElementById('rsub').textContent=sub;
+  let labels=['Wozu Girokonto?','Girokarte nutzen','Dauerauftrag vs. Lastschrift','Dispositionskredit (offen)','Bargeldlose Zahlung','TAN-Begriff','Rechnen: Esma','Fehler erkennen','Kontoauszug Saldo','Lastschrift Vor-/Nachteile (offen)'];
+  let sum=document.getElementById('rsum');
+  sum.innerHTML='';
+  results.forEach((r,i)=>{
+    let d=document.createElement('div');
+    d.className='sum-item';
+    let cls=r===true?'sum-ok':r===false?'sum-no':'sum-skip';
+    let icon=r===true?'✓':r===false?'✗':'–';
+    d.innerHTML='<div class="sum-check '+cls+'">'+icon+'</div><span>'+labels[i]+'</span>';
+    sum.appendChild(d);
+  });
+}
+
+function restart(){
+  cur=0;score=0;results=Array(TOTAL).fill(null);locked=Array(TOTAL).fill(false);selected={};
+  document.querySelectorAll('.opt').forEach(o=>{o.className='opt';});
+  document.querySelectorAll('.feedback-box:not(.fb-info)').forEach(f=>{f.className='feedback-box';f.textContent='';});
+  document.querySelectorAll('.open-field').forEach(f=>{f.value='';});
+  document.querySelectorAll('.anw-field').forEach(f=>{f.value='';});
+  document.getElementById('chk0').textContent='Prüfen';document.getElementById('chk0').onclick=function(){check(0)};
+  document.getElementById('chk1').textContent='Prüfen';document.getElementById('chk1').onclick=function(){check(1)};
+  document.getElementById('chk2').textContent='Prüfen';document.getElementById('chk2').onclick=function(){check(2)};
+  document.getElementById('chk4').textContent='Prüfen';document.getElementById('chk4').onclick=function(){check(4)};
+  document.getElementById('chk5').textContent='Prüfen';document.getElementById('chk5').onclick=function(){check(5)};
+  document.getElementById('chk6').textContent='Prüfen';document.getElementById('chk6').onclick=function(){checkNum(6,310)};
+  document.getElementById('chk7').textContent='Prüfen';document.getElementById('chk7').onclick=function(){check(7)};
+  document.getElementById('chk8').textContent='Prüfen';document.getElementById('chk8').onclick=function(){check(8)};
+  document.getElementById('sc').textContent='0';
+  document.getElementById('qn').textContent='1';
+  document.getElementById('pf').style.width='0%';
+  document.querySelectorAll('.q-block').forEach(q=>q.classList.remove('active'));
+  document.getElementById('q0').classList.add('active');
+  document.getElementById('result').style.display='none';
+  document.getElementById('qw').style.display='block';
+  initDots();
+}
+
+initDots();
+</script>
